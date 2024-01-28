@@ -7,7 +7,7 @@
      ],
     {
     "rewrites": [
-      { "source": "/detect", "destination": "/app.py" }
+      { "source": "/detect(.*)", "destination": "/detect" }
     ]
   }
  }
