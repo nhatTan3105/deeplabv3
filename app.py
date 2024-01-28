@@ -17,7 +17,9 @@ model_path = 'deeplab.h5'
 loaded_model = tf.keras.models.load_model(model_path)
 
 global_keypoint = []
-
+@app.route('/')
+def home():
+    return 'Hello, World!'
 @app.route('/detect', methods=['POST'])
 @cross_origin(origins='*')
 def detect():
