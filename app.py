@@ -1,20 +1,23 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS, cross_origin
-import tensorflow as tf
-import cv2
 import numpy as np
+import cv2
 from PIL import Image, ImageDraw
 import io
-#from flask_ngrok import run_with_ngrok
+import tensorflow as tf
 
 app = Flask(__name__)
-#run_with_ngrok(app)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
+# Đường dẫn đến model TensorFlow Lite
+model_path = 'deeplab.tflite'
+interpreter = tf.lite.Interpreter(model_path=model_path)
+interpreter.allocate_tensors()
 
-model_path = 'deeplab.h5'
-loaded_model = tf.keras.models.load_model(model_path)
+# Các thông số của model (có thể cần điều chỉnh tùy thuộc vào model của bạn)
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 global_keypoint = []
 
@@ -22,31 +25,31 @@ global_keypoint = []
 @cross_origin(origins='*')
 def detect():
     try:
-        # Lấy dữ liệu hình ảnh từ yêu cầu POST
         global global_keypoint
         image_file = request.files['image']
-        # Đảm bảo rằng file hình ảnh được gửi điểm kèm theo
         if image_file:
             print("Đã nhận được dữ liệu hình ảnh từ yêu cầu POST")
-            # Đọc và xử lý hình ảnh
             img = cv2.imdecode(np.frombuffer(image_file.read(), np.uint8), cv2.IMREAD_COLOR)
-            # Resize ảnh về kích thước 512x512
             img = cv2.resize(img, (512, 512))
-            img_original = img.copy()  # Sao chép hình ảnh gốc
-            img = img / 255.0  # Chuẩn hóa giá trị pixel (nếu cần)
-            img = np.expand_dims(img, axis=0)  # Thêm chiều batch
+            img = img / 255.0
+            img = np.expand_dims(img, axis=0)
+            img = img.astype(np.float32)
+            # Đặt dữ liệu vào input tensor
+            interpreter.set_tensor(input_details[0]['index'], img)
 
             # Thực hiện dự đoán
-            predictions = loaded_model.predict(img)
-            # Trích xuất keypoints
+            interpreter.invoke()
+
+            # Lấy kết quả từ output tensor
+            predictions = interpreter.get_tensor(output_details[0]['index'])
+
             keypoints = []
             for i in range(predictions.shape[-1]):
                 coord = np.unravel_index(predictions[0, :, :, i].argmax(), predictions[0, :, :, i].shape)[::-1]
                 keypoints.append(coord)
-            # lưu keypoints
+
             global_keypoint = keypoints
             return jsonify({'ok': 'detected'})
-
         else:
             return jsonify({'error': 'Không có file hình ảnh được gửi'})
     except Exception as e:
