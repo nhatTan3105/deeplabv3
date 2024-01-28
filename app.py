@@ -20,7 +20,9 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 global_keypoint = []
-
+@app.route('/')
+def home():
+    return 'Hello, World!'
 @app.route('/detect', methods=['POST'])
 @cross_origin(origins='*')
 def detect():
