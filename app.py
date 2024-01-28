@@ -5,10 +5,10 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 import io
-from flask_ngrok import run_with_ngrok
+#from flask_ngrok import run_with_ngrok
 
 app = Flask(__name__)
-run_with_ngrok(app)
+#run_with_ngrok(app)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
