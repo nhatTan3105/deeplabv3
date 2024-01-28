@@ -12,10 +12,9 @@ app = Flask(__name__)
 CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-# Load the TFLite model
-model_path = 'deeplab.tflite'
-interpreter = tf.lite.Interpreter(model_path=model_path)
-interpreter.allocate_tensors()
+
+model_path = 'deeplab.h5'
+loaded_model = tf.keras.models.load_model(model_path)
 
 global_keypoint = []
 
@@ -38,9 +37,7 @@ def detect():
             img = np.expand_dims(img, axis=0)  # Thêm chiều batch
 
             # Thực hiện dự đoán
-            interpreter.set_tensor(interpreter.get_input_details()[0]['index'], img)
-            interpreter.invoke()
-            predictions = interpreter.get_tensor(interpreter.get_output_details()[0]['index'])
+            predictions = loaded_model.predict(img)
             # Trích xuất keypoints
             keypoints = []
             for i in range(predictions.shape[-1]):
